@@ -1,11 +1,10 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "khaosmc.discord.chatbridge.mixins",
+  "package": "khaosmc.bridge.the.gap.fabric.mixin",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [
-  ],
-  "client": [
+  "server": [
+	"MinecraftDedicatedServerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

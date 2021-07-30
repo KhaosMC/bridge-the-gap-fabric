@@ -1,25 +1,26 @@
 {
   "schemaVersion": 1,
-  "id": "discord_chatbridge",
+  "id": "bridge_the_gap_fabric",
   "version": "${version}",
 
-  "name": "Discord Chat Bridge",
+  "name": "Bridge The Gap Fabric",
   "description": "A Discord Chat Bridge for Minecraft",
   "authors": [
+	"Space Walker"
   ],
   "contact": {
   },
 
   "license": "MIT License",
 
-  "environment": "*",
+  "environment": "server",
   "entrypoints": {
-    "main": [
-      "khaosmc.discord.chatbridge.DiscordChatBridgeMod"
+    "server": [
+      "khaosmc.bridge.the.gap.fabric.BridgeTheGapMod"
     ]
   },
   "mixins": [
-    "discord_chatbridge.mixins.json"
+    "bridge_the_gap_fabric.mixins.json"
   ],
 
   "depends": {
