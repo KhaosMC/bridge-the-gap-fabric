@@ -4,7 +4,8 @@
   "package": "khaosmc.bridge.the.gap.fabric.mixin",
   "compatibilityLevel": "JAVA_8",
   "server": [
-	"MinecraftDedicatedServerMixin"
+	"MinecraftDedicatedServerMixin",
+	"ServerPlayNetworkHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
