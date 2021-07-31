@@ -19,7 +19,7 @@ public class BTGClient extends WebSocketClient {
 	
 	@Override
 	public void onOpen(ServerHandshake handshakedata) {
-		
+		ChatBridge.INSTANCE.onOpen();
 	}
 	
 	@Override

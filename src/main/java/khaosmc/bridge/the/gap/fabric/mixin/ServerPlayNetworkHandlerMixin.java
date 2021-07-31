@@ -28,7 +28,7 @@ public class ServerPlayNetworkHandlerMixin {
 			)
 	)
 	private void onChatMessage(String message) {
-		if (ChatBridge.isRunning()) {
+		if (ChatBridge.isConnected()) {
 			ChatBridge.INSTANCE.sendChatMessage(player, message);
 		}
 	}

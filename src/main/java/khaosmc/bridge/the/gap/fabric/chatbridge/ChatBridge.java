@@ -4,8 +4,7 @@ import java.net.URI;
 
 import khaosmc.bridge.the.gap.fabric.BridgeTheGapMod;
 import khaosmc.bridge.the.gap.fabric.chatbridge.message.Message;
-import khaosmc.bridge.the.gap.fabric.chatbridge.message.MessageAuthor;
-import khaosmc.bridge.the.gap.fabric.chatbridge.message.MessageClient;
+import khaosmc.bridge.the.gap.fabric.chatbridge.message.MessageBuilder;
 import khaosmc.bridge.the.gap.fabric.config.Config;
 import khaosmc.bridge.the.gap.fabric.config.ConfigManager;
 
@@ -25,14 +24,10 @@ public class ChatBridge {
 	private final BTGClient btgClient;
 	private final Config config;
 	
-	private final MessageClient messageClient;
-	
 	private ChatBridge(MinecraftServer mcServer, BTGClient btgClient, Config config) {
 		this.mcServer = mcServer;
 		this.btgClient = btgClient;
 		this.config = config;
-		
-		this.messageClient = new MessageClient(this.config.client_type, this.config.client_name);
 	}
 	
 	public static void start(MinecraftServer mcServer) {
@@ -60,7 +55,11 @@ public class ChatBridge {
 		}
 	}
 	
-	public static boolean isRunning() {
+	public static boolean isConnected() {
+		return isRunning() && INSTANCE.hasConnection();
+	}
+	
+	private static boolean isRunning() {
 		return INSTANCE != null;
 	}
 	
@@ -72,13 +71,25 @@ public class ChatBridge {
 		btgClient.close();
 	}
 	
+	private boolean hasConnection() {
+		return btgClient.isOpen();
+	}
+	
+	public void onOpen() {
+		Message message = new MessageBuilder().
+				setType("auth").
+				setClient(config.client_type, config.client_name).
+				setContent(config.auth_token).
+				build();
+		btgClient.sendMessage(message);
+	}
+	
 	public void onMessageReceived(Message message) {
 		Text text = new LiteralText(
 				String.format("[%s] ", message.client.name)
 			).append(new LiteralText(
 				String.format("<%s> ", message.author.name)
 			)).append(message.content);
-		
 		mcServer.getPlayerManager().broadcastChatMessage(text, MessageType.CHAT, Util.NIL_UUID);
 	}
 	
@@ -96,9 +107,12 @@ public class ChatBridge {
 			}
 		}
 		
-		MessageAuthor author = new MessageAuthor(name, displayColor);
-		Message message = new Message("chat", messageClient, author, content);
-		
+		Message message = new MessageBuilder().
+				setType("chat").
+				setClient(config.client_type, config.client_name).
+				setAuthor(name, displayColor).
+				setContent(content).
+				build();
 		btgClient.sendMessage(message);
 	}
 }
