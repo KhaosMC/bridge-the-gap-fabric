@@ -14,6 +14,6 @@ public class BridgeTheGapMod implements DedicatedServerModInitializer {
 	
 	@Override
 	public void onInitializeServer() {
-		
+		LOGGER.info(String.format("Initialized %s!", MOD_NAME));
 	}
 }

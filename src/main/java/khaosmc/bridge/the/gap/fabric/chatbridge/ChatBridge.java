@@ -1,28 +1,35 @@
 package khaosmc.bridge.the.gap.fabric.chatbridge;
 
+import java.io.File;
 import java.net.URI;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 import khaosmc.bridge.the.gap.fabric.BridgeTheGapMod;
-import khaosmc.bridge.the.gap.fabric.chatbridge.message.Message;
-import khaosmc.bridge.the.gap.fabric.chatbridge.message.MessageBuilder;
+import khaosmc.bridge.the.gap.fabric.chatbridge.packet.Packets;
+import khaosmc.bridge.the.gap.fabric.chatbridge.packet.c2s.AuthC2SPacket;
+import khaosmc.bridge.the.gap.fabric.chatbridge.packet.c2s.C2SPacket;
+import khaosmc.bridge.the.gap.fabric.chatbridge.packet.s2c.S2CPacket;
 import khaosmc.bridge.the.gap.fabric.config.Config;
 import khaosmc.bridge.the.gap.fabric.config.ConfigManager;
 
 import net.minecraft.network.MessageType;
-import net.minecraft.scoreboard.AbstractTeam;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
+import net.minecraft.text.MutableText;
 import net.minecraft.util.Util;
 
 public class ChatBridge {
 	
-	public static ChatBridge INSTANCE;
+	private static final Gson GSON = new Gson();
 	
-	private final MinecraftServer mcServer;
-	private final BTGClient btgClient;
-	private final Config config;
+	private static ChatBridge INSTANCE;
+	
+	public final MinecraftServer mcServer;
+	public final BTGClient btgClient;
+	public final Config config;
 	
 	private ChatBridge(MinecraftServer mcServer, BTGClient btgClient, Config config) {
 		this.mcServer = mcServer;
@@ -30,11 +37,14 @@ public class ChatBridge {
 		this.config = config;
 	}
 	
+	public static ChatBridge getInstance() {
+		return INSTANCE;
+	}
+	
 	public static void start(MinecraftServer mcServer) {
-		if (isRunning()) {
-			BridgeTheGapMod.LOGGER.warn("Cannot start the chat bridge as it is already running!");
-		} else {
-			Config config = ConfigManager.loadConfig(mcServer.getRunDirectory());
+		if (!isRunning()) {
+			File dir = new File(mcServer.getRunDirectory(), "config");
+			Config config = ConfigManager.loadConfig(dir);
 			
 			if (ConfigManager.isInvalid(config)) {
 				BridgeTheGapMod.LOGGER.warn("Please fill in the config file and restart the server!");
@@ -55,12 +65,20 @@ public class ChatBridge {
 		}
 	}
 	
-	public static boolean isConnected() {
-		return isRunning() && INSTANCE.hasConnection();
+	public static void restart(MinecraftServer mcServer) {
+		if (isRunning()) {
+			stop();
+		}
+		
+		start(mcServer);
 	}
 	
 	private static boolean isRunning() {
 		return INSTANCE != null;
+	}
+	
+	public static boolean isConnected() {
+		return isRunning() && INSTANCE.hasConnection();
 	}
 	
 	private void onStartup() {
@@ -75,44 +93,66 @@ public class ChatBridge {
 		return btgClient.isOpen();
 	}
 	
-	public void onOpen() {
-		Message message = new MessageBuilder().
-				setType("auth").
-				setClient(config.client_type, config.client_name).
-				setContent(config.auth_token).
-				build();
-		btgClient.sendMessage(message);
+	public void tryAuth() {
+		String token = config.auth_token;
+		Client client = new Client("minecraft", config.client_name);
+		AuthC2SPacket packet = new AuthC2SPacket(token, client);
+		
+		sendPacket(packet);
 	}
 	
-	public void onMessageReceived(Message message) {
-		Text text = new LiteralText(
-				String.format("[%s] ", message.client.name)
-			).append(new LiteralText(
-				String.format("<%s> ", message.author.name)
-			)).append(message.content);
-		mcServer.getPlayerManager().broadcastChatMessage(text, MessageType.CHAT, Util.NIL_UUID);
-	}
-	
-	public void sendChatMessage(ServerPlayerEntity player, String content) {
-		String name = player.getEntityName();
-		int displayColor = 0xFFFFFF;
+	public void onPacketReceived(String rawPacket) {
+		JsonElement rawJson = GSON.fromJson(rawPacket, JsonElement.class);
 		
-		AbstractTeam team = player.getScoreboardTeam();
-		
-		if (team != null) {
-			Integer color = team.getColor().getColorValue();
-			
-			if (color != null) {
-				displayColor = color;
-			}
+		if (!rawJson.isJsonObject()) {
+			BridgeTheGapMod.LOGGER.error("Unable to decode packet - unknown format");
+			return;
 		}
 		
-		Message message = new MessageBuilder().
-				setType("chat").
-				setClient(config.client_type, config.client_name).
-				setAuthor(name, displayColor).
-				setContent(content).
-				build();
-		btgClient.sendMessage(message);
+		JsonObject json = rawJson.getAsJsonObject();
+		
+		if (!json.has("type")) {
+			BridgeTheGapMod.LOGGER.error("Unable to decode packet - unknown format");
+			return;
+		}
+		
+		String type = json.get("type").getAsString();
+		Class<? extends S2CPacket> clazz = Packets.getClazzS2C(type);
+		
+		if (clazz == null) {
+			BridgeTheGapMod.LOGGER.error("Unable to decode packet - unknown type \'" + type + "\'");
+			return;
+		}
+		
+		GSON.fromJson(json, clazz).execute(this);
+	}
+	
+	public void sendPacket(C2SPacket packet) {
+		String type = Packets.getTypeC2S(packet);
+		
+		if (type == null) {
+			BridgeTheGapMod.LOGGER.error("Unable to encode packet - unknown type " + packet.getClass());
+			return;
+		}
+		
+		JsonElement rawJson = GSON.toJsonTree(packet);
+		JsonObject json = rawJson.getAsJsonObject();
+		json.addProperty("type", type);
+		
+		btgClient.send(json.toString());
+	}
+	
+	public void broadcastChatMessage(Client client, User user, String message) {
+		MutableText text = new LiteralText(
+			String.format("[%s] ", client.name)
+		);
+		if (user != null) {
+			text.append(
+				String.format("<%s> ", user.name)
+			);
+		}
+		text.append(message);
+		
+		mcServer.getPlayerManager().broadcastChatMessage(text, MessageType.CHAT, Util.NIL_UUID);
 	}
 }

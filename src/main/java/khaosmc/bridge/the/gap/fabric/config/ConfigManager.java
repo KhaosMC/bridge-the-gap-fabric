@@ -41,6 +41,6 @@ public class ConfigManager {
 	}
 	
 	public static boolean isInvalid(Config config) {
-		return config.server_url.isEmpty() || config.client_name.isEmpty() || config.client_type.isEmpty() || config.auth_token.isEmpty();
+		return config.server_url.isEmpty() || config.client_name.isEmpty() || config.auth_token.isEmpty();
 	}
 }

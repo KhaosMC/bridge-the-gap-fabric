@@ -24,7 +24,9 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
+	include "org.java-websocket:Java-WebSocket:1.5.1"
     modImplementation "org.java-websocket:Java-WebSocket:1.5.1"
+    include group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
