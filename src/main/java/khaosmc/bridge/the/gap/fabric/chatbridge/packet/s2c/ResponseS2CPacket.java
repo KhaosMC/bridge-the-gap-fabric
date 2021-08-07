@@ -15,7 +15,7 @@ public class ResponseS2CPacket extends S2CPacket {
 	
 	@Override
 	public void decode(Gson gson, JsonObject packetData) {
-		JsonElement requestJson = packetData.get("request");
+		JsonElement requestJson = packetData.get("response");
 		response = JsonHelper.fromJson(requestJson, Registries.RESPONSES);
 	}
 	
