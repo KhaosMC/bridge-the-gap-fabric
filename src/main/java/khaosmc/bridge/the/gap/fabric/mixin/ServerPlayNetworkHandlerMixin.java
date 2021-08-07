@@ -10,13 +10,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import khaosmc.bridge.the.gap.fabric.chatbridge.ChatBridge;
 import khaosmc.bridge.the.gap.fabric.chatbridge.User;
+import khaosmc.bridge.the.gap.fabric.chatbridge.event.user.UserConnectionEvent;
+import khaosmc.bridge.the.gap.fabric.chatbridge.event.user.UserEvent;
 import khaosmc.bridge.the.gap.fabric.chatbridge.packet.c2s.ChatMessageC2SPacket;
-import khaosmc.bridge.the.gap.fabric.chatbridge.packet.c2s.UserConnectionC2SPacket;
+import khaosmc.bridge.the.gap.fabric.chatbridge.packet.c2s.UserEventC2SPacket;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Formatting;
 
 @Mixin(ServerPlayNetworkHandler.class)
 public class ServerPlayNetworkHandlerMixin {
@@ -48,10 +52,15 @@ public class ServerPlayNetworkHandlerMixin {
 	private void onPlayerJoin(Text reason, CallbackInfo ci) {
 		if (ChatBridge.isConnected()) {
 			User user = User.fromPlayer(player);
-			String message = String.format("%s left the game", player.getEntityName());
+			String message = getLeaveMessage().toString();
+			UserEvent event = new UserConnectionEvent(user, false, message);
 			
-			UserConnectionC2SPacket packet = new UserConnectionC2SPacket(user, false, message);
+			UserEventC2SPacket packet = new UserEventC2SPacket(event);
 			ChatBridge.getInstance().sendPacket(packet);
 		}
+	}
+	
+	private Text getLeaveMessage() {
+		return new TranslatableText("multiplayer.player.left", player.getDisplayName()).formatted(Formatting.YELLOW);
 	}
 }

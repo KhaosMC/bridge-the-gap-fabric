@@ -3,17 +3,14 @@ package khaosmc.bridge.the.gap.fabric.chatbridge;
 import java.io.File;
 import java.net.URI;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-
 import khaosmc.bridge.the.gap.fabric.BridgeTheGapMod;
-import khaosmc.bridge.the.gap.fabric.chatbridge.packet.Packets;
 import khaosmc.bridge.the.gap.fabric.chatbridge.packet.c2s.AuthC2SPacket;
 import khaosmc.bridge.the.gap.fabric.chatbridge.packet.c2s.C2SPacket;
 import khaosmc.bridge.the.gap.fabric.chatbridge.packet.s2c.S2CPacket;
 import khaosmc.bridge.the.gap.fabric.config.Config;
 import khaosmc.bridge.the.gap.fabric.config.ConfigManager;
+import khaosmc.bridge.the.gap.fabric.json.JsonHelper;
+import khaosmc.bridge.the.gap.fabric.registry.Registries;
 
 import net.minecraft.network.MessageType;
 import net.minecraft.server.MinecraftServer;
@@ -22,8 +19,6 @@ import net.minecraft.text.MutableText;
 import net.minecraft.util.Util;
 
 public class ChatBridge {
-	
-	private static final Gson GSON = new Gson();
 	
 	private static ChatBridge INSTANCE;
 	
@@ -102,50 +97,29 @@ public class ChatBridge {
 	}
 	
 	public void onPacketReceived(String rawPacket) {
-		JsonElement rawJson = GSON.fromJson(rawPacket, JsonElement.class);
+		S2CPacket packet = JsonHelper.fromJson(rawPacket, Registries.S2C_PACKETS);
 		
-		if (!rawJson.isJsonObject()) {
-			BridgeTheGapMod.LOGGER.error("Unable to decode packet - unknown format");
-			return;
+		if (packet != null) {
+			packet.execute(this);
 		}
-		
-		JsonObject json = rawJson.getAsJsonObject();
-		
-		if (!json.has("type")) {
-			BridgeTheGapMod.LOGGER.error("Unable to decode packet - unknown format");
-			return;
-		}
-		
-		String type = json.get("type").getAsString();
-		Class<? extends S2CPacket> clazz = Packets.getClazzS2C(type);
-		
-		if (clazz == null) {
-			BridgeTheGapMod.LOGGER.error("Unable to decode packet - unknown type \'" + type + "\'");
-			return;
-		}
-		
-		GSON.fromJson(json, clazz).execute(this);
 	}
 	
 	public void sendPacket(C2SPacket packet) {
-		String type = Packets.getTypeC2S(packet);
+		String rawPacket = JsonHelper.toJson(packet, Registries.C2S_PACKETS);
 		
-		if (type == null) {
-			BridgeTheGapMod.LOGGER.error("Unable to encode packet - unknown type " + packet.getClass());
-			return;
+		if (rawPacket != null) {
+			btgClient.send(rawPacket);
 		}
-		
-		JsonElement rawJson = GSON.toJsonTree(packet);
-		JsonObject json = rawJson.getAsJsonObject();
-		json.addProperty("type", type);
-		
-		btgClient.send(json.toString());
 	}
 	
 	public void broadcastChatMessage(Client client, User user, String message) {
-		MutableText text = new LiteralText(
-			String.format("[%s] ", client.name)
-		);
+		MutableText text = new LiteralText("");
+		
+		if (client != null) {
+			text.append(
+				String.format("[%s] ", client.name)
+			);
+		}
 		if (user != null) {
 			text.append(
 				String.format("<%s> ", user.name)

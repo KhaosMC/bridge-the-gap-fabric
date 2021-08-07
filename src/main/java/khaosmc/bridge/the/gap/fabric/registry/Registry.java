@@ -1,4 +1,4 @@
-package khaosmc.bridge.the.gap.fabric.util;
+package khaosmc.bridge.the.gap.fabric.registry;
 
 import java.util.HashMap;
 import java.util.Map;
