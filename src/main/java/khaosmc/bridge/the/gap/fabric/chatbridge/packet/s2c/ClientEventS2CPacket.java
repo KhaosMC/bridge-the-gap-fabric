@@ -15,7 +15,7 @@ public ClientEvent client_event;
 	
 	@Override
 	public void decode(Gson gson, JsonObject packetData) {
-		JsonElement eventJson = packetData.get("user_event");
+		JsonElement eventJson = packetData.get("client_event");
 		client_event = JsonHelper.fromJson(eventJson, Registries.CLIENT_EVENTS);
 	}
 	
