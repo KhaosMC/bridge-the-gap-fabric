@@ -18,7 +18,7 @@ public class ClientConnectionEvent extends ClientEvent {
 	}
 	
 	@Override
-	public void execute(Client client, ChatBridge chatBridge) {
+	public void handle(Client client, ChatBridge chatBridge) {
 		String m = message;
 		
 		if (m.isEmpty()) {

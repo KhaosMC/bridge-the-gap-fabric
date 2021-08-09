@@ -5,10 +5,10 @@ import khaosmc.bridge.the.gap.fabric.chatbridge.User;
 public class ChatMessageC2SPacket extends C2SPacket {
 	
 	public User user;
-	public String content;
+	public String message;
 	
-	public ChatMessageC2SPacket(User author, String content) {
+	public ChatMessageC2SPacket(User author, String message) {
 		this.user = author;
-		this.content = content;
+		this.message = message;
 	}
 }

@@ -1,11 +1,10 @@
 package khaosmc.bridge.the.gap.fabric.json;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 
 public interface JsonSerializable {
 	
-	default void decode(Gson gson, JsonObject json) {
+	default void decode(JsonElement rawJson) {
 		
 	}
 }

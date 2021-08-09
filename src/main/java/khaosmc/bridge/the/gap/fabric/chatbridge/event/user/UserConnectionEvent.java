@@ -9,19 +9,13 @@ public class UserConnectionEvent extends UserEvent {
 	public boolean connect;
 	public String message;
 	
-	public UserConnectionEvent(User user, boolean connect, String message) {
-		super(user);
-		
+	public UserConnectionEvent(boolean connect, String message) {
 		this.connect = connect;
 		this.message = message;
 	}
 	
-	public UserConnectionEvent(User user, boolean connect) {
-		this(user, connect, "");
-	}
-	
 	@Override
-	public void execute(Client client, ChatBridge chatBridge) {
+	public void handle(Client client, User user, ChatBridge chatBridge) {
 		String m = message;
 		
 		if (m.isEmpty()) {

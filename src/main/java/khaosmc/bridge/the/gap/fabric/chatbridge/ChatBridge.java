@@ -3,8 +3,13 @@ package khaosmc.bridge.the.gap.fabric.chatbridge;
 import java.io.File;
 import java.net.URI;
 
+import com.google.gson.JsonElement;
+
 import khaosmc.bridge.the.gap.fabric.BridgeTheGapMod;
-import khaosmc.bridge.the.gap.fabric.chatbridge.packet.c2s.AuthC2SPacket;
+import khaosmc.bridge.the.gap.fabric.chatbridge.message.AuthC2SMessage;
+import khaosmc.bridge.the.gap.fabric.chatbridge.message.AuthS2CMessage;
+import khaosmc.bridge.the.gap.fabric.chatbridge.message.C2SMessage;
+import khaosmc.bridge.the.gap.fabric.chatbridge.message.S2CMessage;
 import khaosmc.bridge.the.gap.fabric.chatbridge.packet.c2s.C2SPacket;
 import khaosmc.bridge.the.gap.fabric.chatbridge.packet.s2c.S2CPacket;
 import khaosmc.bridge.the.gap.fabric.config.Config;
@@ -88,28 +93,61 @@ public class ChatBridge {
 		return btgClient.isOpen();
 	}
 	
-	public void tryAuth() {
+	public void onServerHandshake() {
+		tryAuth();
+	}
+	
+	public void onAuth(AuthS2CMessage auth) {
+		String log;
+		
+		if (auth.success) {
+			log = "Successfully authenticated with the websocket server!";
+		} else {
+			log = "Failed to authenticate with the websocket server: " + auth.reason;
+		}
+		
+		BridgeTheGapMod.LOGGER.info(log);
+	}
+	
+	private void tryAuth() {
 		String token = config.auth_token;
 		Client client = new Client("minecraft", config.client_name);
-		AuthC2SPacket packet = new AuthC2SPacket(token, client);
 		
-		sendPacket(packet);
+		AuthC2SMessage auth = new AuthC2SMessage(token, client);
+		btgClient.sendMessage(auth);
 	}
 	
-	public void onPacketReceived(String rawPacket) {
-		S2CPacket packet = JsonHelper.fromJson(rawPacket, Registries.S2C_PACKETS);
-		
-		if (packet != null) {
-			packet.execute(this);
+	public void onMessageReceived(S2CMessage message) {
+		if (message.source == null || message.payload == null) {
+			BridgeTheGapMod.LOGGER.error("Unable to decode packet from websocket server - unknown format");
+			return;
 		}
+		
+		Class<? extends S2CPacket> clazz = Registries.getClazz(Registries.S2C_PACKETS, message.type);
+		
+		if (clazz == null) {
+			BridgeTheGapMod.LOGGER.error("Unable to decode message from websocket server - unknown packet type \'" + message.type + "\'");
+			return;
+		}
+		
+		S2CPacket packet = JsonHelper.fromJson(message.payload, clazz);
+		packet.decode(message.payload);
+		
+		packet.execute(message.source, this);
 	}
 	
-	public void sendPacket(C2SPacket packet) {
-		String rawPacket = JsonHelper.toJson(packet, Registries.C2S_PACKETS);
+	public void sendPacket(C2SPacket packet, Client... targets) {
+		String type = Registries.getId(Registries.C2S_PACKETS, packet.getClass());
 		
-		if (rawPacket != null) {
-			btgClient.send(rawPacket);
+		if (type == null) {
+			BridgeTheGapMod.LOGGER.error("Unable to encode packet - unknown packet " + packet.getClass());
+			return;
 		}
+		
+		JsonElement payload = JsonHelper.toJson(packet);
+		
+		C2SMessage message = new C2SMessage(type, targets, payload);
+		btgClient.sendMessage(message);
 	}
 	
 	public void broadcastChatMessage(Client client, User user, String message) {

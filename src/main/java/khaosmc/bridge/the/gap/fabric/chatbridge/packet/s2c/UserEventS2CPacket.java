@@ -1,28 +1,36 @@
 package khaosmc.bridge.the.gap.fabric.chatbridge.packet.s2c;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import khaosmc.bridge.the.gap.fabric.chatbridge.ChatBridge;
+import khaosmc.bridge.the.gap.fabric.chatbridge.Client;
+import khaosmc.bridge.the.gap.fabric.chatbridge.User;
 import khaosmc.bridge.the.gap.fabric.chatbridge.event.user.UserEvent;
 import khaosmc.bridge.the.gap.fabric.json.JsonHelper;
 import khaosmc.bridge.the.gap.fabric.registry.Registries;
 
 public class UserEventS2CPacket extends S2CPacket {
 	
-	public UserEvent user_event;
+	public String type;
+	public User user;
+	public UserEvent event;
 	
 	@Override
-	public void decode(Gson gson, JsonObject packetData) {
-		JsonElement eventJson = packetData.get("user_event");
-		user_event = JsonHelper.fromJson(eventJson, Registries.USER_EVENTS);
+	public void decode(JsonElement rawJson) {
+		event = null; // overwrite the empty UserEvent that Gson writes
+		
+		JsonObject packetJson = rawJson.getAsJsonObject();
+		JsonElement rawEventJson = packetJson.get("event");
+		
+		Class<? extends UserEvent> clazz = Registries.getClazz(Registries.USER_EVENTS, type);
+		event = JsonHelper.fromJson(rawEventJson, clazz);
 	}
 	
 	@Override
-	public void execute(ChatBridge chatBridge) {
-		if (user_event != null) {
-			user_event.execute(source, chatBridge);
+	public void execute(Client source, ChatBridge chatBridge) {
+		if (event != null) {
+			event.handle(source, user, chatBridge);
 		}
 	}
 }

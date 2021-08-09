@@ -51,11 +51,11 @@ public class ServerPlayNetworkHandlerMixin {
 	)
 	private void onPlayerJoin(Text reason, CallbackInfo ci) {
 		if (ChatBridge.isConnected()) {
-			User user = User.fromPlayer(player);
-			String message = getLeaveMessage().toString();
-			UserEvent event = new UserConnectionEvent(user, false, message);
+			String message = getLeaveMessage().getString();
+			UserEvent event = new UserConnectionEvent(false, message);
 			
-			UserEventC2SPacket packet = new UserEventC2SPacket(event);
+			User user = User.fromPlayer(player);
+			UserEventC2SPacket packet = new UserEventC2SPacket(user, event);
 			ChatBridge.getInstance().sendPacket(packet);
 		}
 	}

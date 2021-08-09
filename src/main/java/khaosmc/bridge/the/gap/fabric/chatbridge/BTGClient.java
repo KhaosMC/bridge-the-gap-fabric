@@ -6,6 +6,10 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import khaosmc.bridge.the.gap.fabric.BridgeTheGapMod;
+import khaosmc.bridge.the.gap.fabric.chatbridge.message.AuthS2CMessage;
+import khaosmc.bridge.the.gap.fabric.chatbridge.message.Message;
+import khaosmc.bridge.the.gap.fabric.chatbridge.message.S2CMessage;
+import khaosmc.bridge.the.gap.fabric.json.JsonHelper;
 
 public class BTGClient extends WebSocketClient {
 	
@@ -16,12 +20,24 @@ public class BTGClient extends WebSocketClient {
 	@Override
 	public void onOpen(ServerHandshake handshakedata) {
 		BridgeTheGapMod.LOGGER.info(handshakedata.getHttpStatusMessage());
-		ChatBridge.getInstance().tryAuth();
+		ChatBridge.getInstance().onServerHandshake();
 	}
 	
 	@Override
 	public void onMessage(String message) {
-		ChatBridge.getInstance().onPacketReceived(message);
+		S2CMessage serverMessage = JsonHelper.fromJson(message, S2CMessage.class);
+		
+		if (serverMessage.type == null) {
+			BridgeTheGapMod.LOGGER.error("Unable to decode message from websocket server - unknown format");
+			return;
+		}
+		
+		if (serverMessage.type.equals("auth")) {
+			AuthS2CMessage auth = JsonHelper.fromJson(message, AuthS2CMessage.class);
+			ChatBridge.getInstance().onAuth(auth);
+		} else {
+			ChatBridge.getInstance().onMessageReceived(serverMessage);
+		}
 	}
 	
 	@Override
@@ -32,5 +48,9 @@ public class BTGClient extends WebSocketClient {
 	@Override
 	public void onError(Exception ex) {
 		BridgeTheGapMod.LOGGER.error(ex);
+	}
+	
+	public void sendMessage(Message message) {
+		send(JsonHelper.toJson(message).toString());
 	}
 }

@@ -47,11 +47,11 @@ public class PlayerManagerMixin {
 	)
 	private void onPlayerJoin(ClientConnection connection, ServerPlayerEntity player, CallbackInfo ci) {
 		if (ChatBridge.isConnected()) {
-			User user = User.fromPlayer(player);
-			String message = getJoinMessage(player).toString();
-			UserEvent event = new UserConnectionEvent(user, true, message);
+			String message = getJoinMessage(player).getString();
+			UserEvent event = new UserConnectionEvent(true, message);
 			
-			UserEventC2SPacket packet = new UserEventC2SPacket(event);
+			User user = User.fromPlayer(player);
+			UserEventC2SPacket packet = new UserEventC2SPacket(user, event);
 			ChatBridge.getInstance().sendPacket(packet);
 		}
 	}
