@@ -12,21 +12,21 @@ import khaosmc.bridge.the.gap.fabric.registry.Registries;
 public class RequestS2CPacket extends S2CPacket {
 	
 	public String type;
-	public Request request;
+	public JsonElement request;
 	
 	@Override
 	public void decode(JsonElement rawJson) {
 		request = null; // overwrite the empty Request Gson writes
 		
 		JsonObject packetJson = rawJson.getAsJsonObject();
-		JsonElement requestJson = packetJson.get("request");
-		
-		Class<? extends Request> clazz = Registries.getClazz(Registries.REQUESTS, type);
-		request = JsonHelper.fromJson(requestJson, clazz);
+		request = packetJson.get("request");
 	}
 	
 	@Override
 	public void execute(Client source, ChatBridge chatBridge) {
+		Class<? extends Request> clazz = Registries.getClazz(Registries.REQUESTS, type);
+		Request request = JsonHelper.fromJson(this.request, clazz);
+		
 		if (request != null) {
 			request.handle(source, chatBridge);
 		}

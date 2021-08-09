@@ -14,21 +14,21 @@ public class UserEventS2CPacket extends S2CPacket {
 	
 	public String type;
 	public User user;
-	public UserEvent event;
+	public JsonElement event;
 	
 	@Override
 	public void decode(JsonElement rawJson) {
 		event = null; // overwrite the empty UserEvent that Gson writes
 		
 		JsonObject packetJson = rawJson.getAsJsonObject();
-		JsonElement rawEventJson = packetJson.get("event");
-		
-		Class<? extends UserEvent> clazz = Registries.getClazz(Registries.USER_EVENTS, type);
-		event = JsonHelper.fromJson(rawEventJson, clazz);
+		event = packetJson.get("event");
 	}
 	
 	@Override
 	public void execute(Client source, ChatBridge chatBridge) {
+		Class<? extends UserEvent> clazz = Registries.getClazz(Registries.USER_EVENTS, type);
+		UserEvent event = JsonHelper.fromJson(this.event, clazz);
+		
 		if (event != null) {
 			event.handle(source, user, chatBridge);
 		}

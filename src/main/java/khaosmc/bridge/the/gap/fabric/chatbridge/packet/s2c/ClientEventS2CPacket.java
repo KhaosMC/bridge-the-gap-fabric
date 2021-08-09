@@ -12,21 +12,21 @@ import khaosmc.bridge.the.gap.fabric.registry.Registries;
 public class ClientEventS2CPacket extends S2CPacket {
 	
 	public String type;
-	public ClientEvent event;
+	public JsonElement event;
 	
 	@Override
 	public void decode(JsonElement rawJson) {
 		event = null; // overwrite the empty ClientEvent Gson writes
 		
 		JsonObject packetJson = rawJson.getAsJsonObject();
-		JsonElement rawEventJson = packetJson.get("event");
-		
-		Class<? extends ClientEvent> clazz = Registries.getClazz(Registries.CLIENT_EVENTS, type);
-		event = JsonHelper.fromJson(rawEventJson, clazz);
+		event = packetJson.get("event");
 	}
 	
 	@Override
 	public void execute(Client source, ChatBridge chatBridge) {
+		Class<? extends ClientEvent> clazz = Registries.getClazz(Registries.CLIENT_EVENTS, type);
+		ClientEvent event = JsonHelper.fromJson(this.event, clazz);
+		
 		if (event != null) {
 			event.handle(source, chatBridge);
 		}

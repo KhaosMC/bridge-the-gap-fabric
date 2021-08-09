@@ -6,7 +6,8 @@
   "server": [
 	"MinecraftDedicatedServerMixin",
 	"PlayerManagerMixin",
-	"ServerPlayNetworkHandlerMixin"
+	"ServerPlayNetworkHandlerMixin",
+	"TeamMixin"
   ],
   "injectors": {
     "defaultRequire": 1

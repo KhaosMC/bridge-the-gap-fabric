@@ -21,6 +21,7 @@ import net.minecraft.network.MessageType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
+import net.minecraft.text.TextColor;
 import net.minecraft.util.Util;
 
 public class ChatBridge {
@@ -111,7 +112,7 @@ public class ChatBridge {
 	
 	private void tryAuth() {
 		String token = config.auth_token;
-		Client client = new Client("minecraft", config.client_name);
+		Client client = new Client("minecraft", config.client_name, config.client_display_color);
 		
 		AuthC2SMessage auth = new AuthC2SMessage(token, client);
 		btgClient.sendMessage(auth);
@@ -154,14 +155,30 @@ public class ChatBridge {
 		MutableText text = new LiteralText("");
 		
 		if (client != null) {
-			text.append(
-				String.format("[%s] ", client.name)
-			);
+			text.append(new LiteralText(
+				"["
+			)).append(new LiteralText(
+				client.name
+			).styled(style -> {
+				return style.withColor(
+					TextColor.fromRgb(client.getColor())
+				);
+			})).append(new LiteralText(
+				"] "
+			));
 		}
 		if (user != null) {
-			text.append(
-				String.format("<%s> ", user.name)
-			);
+			text.append(new LiteralText(
+				"<"
+			)).append(new LiteralText(
+				user.name
+			).styled(style -> {
+				return style.withColor(
+					TextColor.fromRgb(user.getColor())
+				);
+			})).append(new LiteralText(
+				"> "
+			));
 		}
 		text.append(message);
 		
