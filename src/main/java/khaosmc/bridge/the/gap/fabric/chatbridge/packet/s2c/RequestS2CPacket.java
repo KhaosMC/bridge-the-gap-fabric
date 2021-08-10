@@ -1,7 +1,6 @@
 package khaosmc.bridge.the.gap.fabric.chatbridge.packet.s2c;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 import khaosmc.bridge.the.gap.fabric.chatbridge.ChatBridge;
 import khaosmc.bridge.the.gap.fabric.chatbridge.Client;
@@ -13,14 +12,6 @@ public class RequestS2CPacket extends S2CPacket {
 	
 	public String type;
 	public JsonElement request;
-	
-	@Override
-	public void decode(JsonElement rawJson) {
-		request = null; // overwrite the empty Request Gson writes
-		
-		JsonObject packetJson = rawJson.getAsJsonObject();
-		request = packetJson.get("request");
-	}
 	
 	@Override
 	public void execute(Client source, ChatBridge chatBridge) {

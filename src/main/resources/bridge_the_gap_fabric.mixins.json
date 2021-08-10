@@ -4,6 +4,7 @@
   "package": "khaosmc.bridge.the.gap.fabric.mixin",
   "compatibilityLevel": "JAVA_8",
   "server": [
+	"CommandManagerMixin",
 	"MinecraftDedicatedServerMixin",
 	"PlayerManagerMixin",
 	"ServerPlayNetworkHandlerMixin",

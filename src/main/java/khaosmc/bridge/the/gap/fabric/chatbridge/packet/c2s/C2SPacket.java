@@ -10,6 +10,7 @@ public class C2SPacket {
 		Registries.register(registry, "user_event"    , UserEventC2SPacket.class);
 		Registries.register(registry, "client_message", ClientMessageC2SPacket.class);
 		Registries.register(registry, "chat_message"  , ChatMessageC2SPacket.class);
+		Registries.register(registry, "whisper"       , WhisperC2SPacket.class);
 		Registries.register(registry, "request"       , RequestC2SPacket.class);
 		Registries.register(registry, "response"      , ResponseC2SPacket.class);
 	}

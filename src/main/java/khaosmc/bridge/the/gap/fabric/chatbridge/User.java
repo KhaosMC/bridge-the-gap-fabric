@@ -3,12 +3,11 @@ package khaosmc.bridge.the.gap.fabric.chatbridge;
 import khaosmc.bridge.the.gap.fabric.interfaces.mixin.ITeam;
 
 import net.minecraft.scoreboard.AbstractTeam;
-import net.minecraft.scoreboard.Team;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 public class User {
 	
-	public String id;
+	public String id; // ids should be unique within a platform (thought not necessarily across platforms)
 	public String name;
 	public String display_color; // RRGGBB
 	
@@ -19,18 +18,18 @@ public class User {
 	}
 	
 	public User(String id, String name, int color) {
-		this(id, name, String.valueOf(color));
+		this(id, name, Integer.toHexString(color));
 	}
 	
 	public User(String id, String name) {
-		this(id, name, 0xFFFFFF);
+		this(id, name, "");
 	}
 	
-	public int getColor() {
+	public Integer getColor() {
 		try {
 			return Integer.parseInt(display_color, 16);
 		} catch (NumberFormatException e) {
-			return 0xFFFFFF;
+			return null;
 		}
 	}
 	
@@ -47,18 +46,17 @@ public class User {
 	public static User fromPlayer(ServerPlayerEntity player) {
 		String id = player.getUuidAsString();
 		String name = player.getEntityName();
-		int color = 0xFFFFFF;
 		
-		AbstractTeam abstractTeam = player.getScoreboardTeam();
+		AbstractTeam team = player.getScoreboardTeam();
 		
-		if (abstractTeam != null && abstractTeam instanceof Team) {
-			Integer teamColor = ((ITeam)abstractTeam).getTeamColor().getColorValue();
+		if (team != null) {
+			Integer teamColor = ((ITeam)team).getTeamColor().getColorValue();
 			
 			if (teamColor != null) {
-				color = teamColor;
+				return new User(id, name, teamColor);
 			}
 		}
 		
-		return new User(id, name, color);
+		return new User(id, name);
 	}
 }

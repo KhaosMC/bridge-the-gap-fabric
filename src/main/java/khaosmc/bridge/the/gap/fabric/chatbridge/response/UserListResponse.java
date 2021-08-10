@@ -8,7 +8,11 @@ public class UserListResponse extends Response {
 	
 	public User[] user_list;
 	
+	public UserListResponse(User[] user_list) {
+		this.user_list = user_list;
+	}
+	
 	public void handle(Client client, ChatBridge chatBridge) {
-		
+		chatBridge.updateUserList(client, user_list);
 	}
 }

@@ -2,6 +2,10 @@ package khaosmc.bridge.the.gap.fabric.chatbridge;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.google.gson.JsonElement;
 
@@ -11,7 +15,9 @@ import khaosmc.bridge.the.gap.fabric.chatbridge.message.AuthS2CMessage;
 import khaosmc.bridge.the.gap.fabric.chatbridge.message.C2SMessage;
 import khaosmc.bridge.the.gap.fabric.chatbridge.message.S2CMessage;
 import khaosmc.bridge.the.gap.fabric.chatbridge.packet.c2s.C2SPacket;
+import khaosmc.bridge.the.gap.fabric.chatbridge.packet.c2s.RequestC2SPacket;
 import khaosmc.bridge.the.gap.fabric.chatbridge.packet.s2c.S2CPacket;
+import khaosmc.bridge.the.gap.fabric.chatbridge.request.UserListRequest;
 import khaosmc.bridge.the.gap.fabric.config.Config;
 import khaosmc.bridge.the.gap.fabric.config.ConfigManager;
 import khaosmc.bridge.the.gap.fabric.json.JsonHelper;
@@ -19,9 +25,11 @@ import khaosmc.bridge.the.gap.fabric.registry.Registries;
 
 import net.minecraft.network.MessageType;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
-import net.minecraft.text.TextColor;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 
 public class ChatBridge {
@@ -32,10 +40,16 @@ public class ChatBridge {
 	public final BTGClient btgClient;
 	public final Config config;
 	
+	private final Map<String, Client> clients;
+	private final Map<String, Map<String, User>> users;
+	
 	private ChatBridge(MinecraftServer mcServer, BTGClient btgClient, Config config) {
 		this.mcServer = mcServer;
 		this.btgClient = btgClient;
 		this.config = config;
+		
+		this.clients = new HashMap<>();
+		this.users = new HashMap<>();
 	}
 	
 	public static ChatBridge getInstance() {
@@ -108,6 +122,12 @@ public class ChatBridge {
 		}
 		
 		BridgeTheGapMod.LOGGER.info(log);
+		
+		if (auth.success) {
+			UserListRequest request = new UserListRequest();
+			RequestC2SPacket packet = new RequestC2SPacket(request);
+			sendPacket(packet);
+		}
 	}
 	
 	private void tryAuth() {
@@ -131,10 +151,7 @@ public class ChatBridge {
 			return;
 		}
 		
-		S2CPacket packet = JsonHelper.fromJson(message.payload, clazz);
-		packet.decode(message.payload);
-		
-		packet.execute(message.source, this);
+		JsonHelper.fromJson(message.payload, clazz).execute(message.source, this);
 	}
 	
 	public void sendPacket(C2SPacket packet, Client... targets) {
@@ -152,36 +169,105 @@ public class ChatBridge {
 	}
 	
 	public void broadcastChatMessage(Client client, User user, String message) {
+		broadcastChatMessage(client, user, new LiteralText(message));
+	}
+	
+	public void broadcastChatMessage(Client client, User user, Text message) {
 		MutableText text = new LiteralText("");
 		
 		if (client != null) {
-			text.append(new LiteralText(
-				"["
-			)).append(new LiteralText(
-				client.name
-			).styled(style -> {
-				return style.withColor(
-					TextColor.fromRgb(client.getColor())
-				);
-			})).append(new LiteralText(
-				"] "
-			));
+			text.
+				append(TextHelper.fancyFormatClientName(client)).
+				append(" ");
 		}
 		if (user != null) {
-			text.append(new LiteralText(
-				"<"
-			)).append(new LiteralText(
-				user.name
-			).styled(style -> {
-				return style.withColor(
-					TextColor.fromRgb(user.getColor())
-				);
-			})).append(new LiteralText(
-				"> "
-			));
+			text.
+				append(TextHelper.fancyFormatUserName(client, user)).
+				append(" ");
 		}
 		text.append(message);
 		
 		mcServer.getPlayerManager().broadcastChatMessage(text, MessageType.CHAT, Util.NIL_UUID);
+	}
+	
+	public void broadcastWhisper(Client fromClient, User fromUser, User toUser, String message) {
+		MutableText text = new LiteralText("").formatted(Formatting.GRAY, Formatting.ITALIC);
+		
+		text.
+			append(TextHelper.fancyFormatClientName(fromClient)).
+			append(" ");
+		if (fromUser != null) {
+			text.
+				append(TextHelper.fancyFormatUserName(fromClient, fromUser)).
+				append(" ");
+		}
+		text.
+			append(new LiteralText(String.format("whispers to you: %s", message)));
+		
+		if (toUser == null) {
+			mcServer.getPlayerManager().broadcastChatMessage(text, MessageType.SYSTEM, Util.NIL_UUID);
+		} else {
+			ServerPlayerEntity toPlayer = mcServer.getPlayerManager().getPlayer(toUser.name);
+			
+			if (toPlayer != null) {
+				toPlayer.sendSystemMessage(text, Util.NIL_UUID);
+			}
+		}
+	}
+	
+	public void updateUserList(Client client, User[] userList) {
+		clients.put(client.name, client);
+		Map<String, User> userMap = users.computeIfAbsent(client.name, clientName -> new HashMap<>());
+		
+		for (User user : userList) {
+			userMap.put(user.name, user);
+		}
+	}
+	
+	public Collection<String> getClientNames() {
+		return clients.keySet();
+	}
+	
+	public Collection<Client> getClients() {
+		return clients.values();
+	}
+	
+	public Client getClient(String name) {
+		return clients.get(name);
+	}
+	
+	public Collection<String> getUserNames(String clientName) {
+		Map<String, User> userMap = users.get(clientName);
+		return userMap == null ? Collections.emptyList() : userMap.keySet();
+	}
+	
+	public Collection<User> getUsers(String clientName) {
+		Map<String, User> userMap = users.get(clientName);
+		return userMap == null ? Collections.emptyList() : userMap.values();
+	}
+	
+	public User getUser(String clientName, String userName) {
+		Map<String, User> userMap = users.get(clientName);
+		return userMap == null ? null : userMap.get(userName);
+	}
+	
+	public void onClientConnect(Client client) {
+		clients.put(client.name, client);
+		users.computeIfAbsent(client.name, clientName -> new HashMap<>());
+	}
+	
+	public void onClientDisconnect(Client client) {
+		clients.remove(client.name);
+		users.remove(client.name);
+	}
+	
+	public void onUserConnect(Client client, User user) {
+		onClientConnect(client);
+		users.get(client.name).put(user.name, user);
+	}
+	
+	public void onUserDisconnect(Client client, User user) {
+		onClientConnect(client);
+		users.get(client.name).remove(user.name);
 	}
 }

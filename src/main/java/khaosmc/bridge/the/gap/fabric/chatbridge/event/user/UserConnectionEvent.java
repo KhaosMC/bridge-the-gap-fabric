@@ -2,26 +2,39 @@ package khaosmc.bridge.the.gap.fabric.chatbridge.event.user;
 
 import khaosmc.bridge.the.gap.fabric.chatbridge.ChatBridge;
 import khaosmc.bridge.the.gap.fabric.chatbridge.Client;
+import khaosmc.bridge.the.gap.fabric.chatbridge.TextHelper;
 import khaosmc.bridge.the.gap.fabric.chatbridge.User;
+
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 
 public class UserConnectionEvent extends UserEvent {
 	
 	public boolean connect;
-	public String message;
 	
-	public UserConnectionEvent(boolean connect, String message) {
+	public UserConnectionEvent(boolean connect) {
 		this.connect = connect;
-		this.message = message;
 	}
 	
 	@Override
 	public void handle(Client client, User user, ChatBridge chatBridge) {
-		String m = message;
-		
-		if (m.isEmpty()) {
-			m = String.format("%s %s!", user.name, connect ? "connected" : "disconnected");
+		if (connect) {
+			chatBridge.onUserConnect(client, user);
+		} else {
+			chatBridge.onUserDisconnect(client, user);
 		}
 		
-		chatBridge.broadcastChatMessage(client, null, m);
+		if (client.type.equals("minecraft")) {
+			Text playerName = TextHelper.formatUserName(client, user, false);
+			Text message = connect ? TextHelper.getJoinMessage(playerName) : TextHelper.getLeaveMessage(playerName);
+			
+			chatBridge.broadcastChatMessage(client, null, message);
+		} else {
+			Text message = new LiteralText("").
+				append(TextHelper.formatUserName(client, user, false)).
+				append(String.format(" %s!", connect ? "connected" : "disconnected"));
+			
+			chatBridge.broadcastChatMessage(client, null, message);
+		}
 	}
 }
