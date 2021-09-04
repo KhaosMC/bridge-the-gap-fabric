@@ -4,7 +4,6 @@ import khaosmc.bridge.the.gap.fabric.chatbridge.ChatBridge;
 import khaosmc.bridge.the.gap.fabric.chatbridge.Client;
 import khaosmc.bridge.the.gap.fabric.chatbridge.TextHelper;
 import khaosmc.bridge.the.gap.fabric.chatbridge.User;
-
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 
@@ -25,7 +24,7 @@ public class UserConnectionEvent extends UserEvent {
 		}
 		
 		if (client.type.equals("minecraft")) {
-			Text playerName = TextHelper.formatUserName(client, user, false);
+			Text playerName = TextHelper.formatUserName(client, user, !connect);
 			Text message = connect ? TextHelper.getJoinMessage(playerName) : TextHelper.getLeaveMessage(playerName);
 			
 			chatBridge.broadcastChatMessage(client, null, message);

@@ -6,6 +6,7 @@
   "server": [
 	"CommandManagerMixin",
 	"MinecraftDedicatedServerMixin",
+	"MinecraftServerMixin",
 	"PlayerManagerMixin",
 	"ServerPlayNetworkHandlerMixin",
 	"TeamMixin"

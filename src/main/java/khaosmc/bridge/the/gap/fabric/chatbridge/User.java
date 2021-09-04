@@ -45,7 +45,7 @@ public class User {
 	
 	public static User fromPlayer(ServerPlayerEntity player) {
 		String id = player.getUuidAsString();
-		String name = player.getEntityName();
+		String name = player.getDisplayName().getString();
 		
 		AbstractTeam team = player.getScoreboardTeam();
 		

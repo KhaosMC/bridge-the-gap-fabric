@@ -198,7 +198,7 @@ public class ChatBridge {
 			append(" ");
 		if (fromUser != null) {
 			text.
-				append(TextHelper.fancyFormatUserName(fromClient, fromUser)).
+				append(TextHelper.formatUserName(fromClient, fromUser, false)).
 				append(" ");
 		}
 		text.

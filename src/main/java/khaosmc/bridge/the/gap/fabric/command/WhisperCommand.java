@@ -13,7 +13,6 @@ import khaosmc.bridge.the.gap.fabric.chatbridge.Client;
 import khaosmc.bridge.the.gap.fabric.chatbridge.TextHelper;
 import khaosmc.bridge.the.gap.fabric.chatbridge.User;
 import khaosmc.bridge.the.gap.fabric.chatbridge.packet.c2s.WhisperC2SPacket;
-
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.command.CommandManager;
