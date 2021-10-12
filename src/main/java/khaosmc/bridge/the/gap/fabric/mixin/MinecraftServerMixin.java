@@ -18,7 +18,7 @@ public class MinecraftServerMixin {
 			method = "tick",
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/server/MinecraftServer;save(ZZZ)V"
+					target = "Lnet/minecraft/server/MinecraftServer;save(ZZZ)Z"
 			)
 	)
 	private void onTick(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {
