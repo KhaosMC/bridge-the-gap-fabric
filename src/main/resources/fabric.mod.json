@@ -1,30 +1,30 @@
 {
-  "schemaVersion": 1,
-  "id": "bridge_the_gap_fabric",
-  "version": "${version}",
+	"schemaVersion": 1,
+	"id": "bridge-the-gap",
+	"version": "${version}",
 
-  "name": "Bridge The Gap Fabric",
-  "description": "A Discord Chat Bridge for Minecraft",
-  "authors": [
-	"Space Walker"
-  ],
-  "contact": {
-  },
+	"name": "Bridge The Gap",
+	"description": "A Discord Chat Bridge for Minecraft",
+	"authors": [
+		"Space Walker"
+	],
+	"contact": {
+	},
 
-  "license": "MIT License",
+	"license": "MIT License",
 
-  "environment": "server",
-  "entrypoints": {
-    "server": [
-      "khaosmc.bridge.the.gap.fabric.BridgeTheGapMod"
-    ]
-  },
-  "mixins": [
-    "bridge_the_gap_fabric.mixins.json"
-  ],
+	"environment": "server",
+	"entrypoints": {
+		"server": [
+			"khaosmc.bridge.the.gap.BridgeTheGapMod"
+		]
+	},
+	"mixins": [
+		"bridge-the-gap.mixins.json"
+	],
 
-  "depends": {
-    "fabricloader": ">=0.11.3",
-    "minecraft": "1.16.x"
-  }
+	"depends": {
+		"fabricloader": ">=0.14.23",
+		"minecraft": "1.20.2"
+	}
 }

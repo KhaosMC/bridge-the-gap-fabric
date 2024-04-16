@@ -1,17 +1,16 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "khaosmc.bridge.the.gap.fabric.mixin",
-  "compatibilityLevel": "JAVA_8",
-  "server": [
-	"CommandManagerMixin",
-	"MinecraftDedicatedServerMixin",
-	"MinecraftServerMixin",
-	"PlayerManagerMixin",
-	"ServerPlayNetworkHandlerMixin",
-	"TeamMixin"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+	"required": true,
+	"minVersion": "0.8",
+	"package": "khaosmc.bridge.the.gap.fabric.mixin",
+	"compatibilityLevel": "JAVA_17",
+	"server": [
+		"CommandsMixin",
+		"DedicatedServerMixin",
+		"MinecraftServerMixin",
+		"PlayerListMixin",
+		"ServerGamePacketListenerImplMixn"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
 }
